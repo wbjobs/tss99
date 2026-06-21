@@ -1,0 +1,108 @@
+[
+  {
+    "id": "8645d36b-2e2d-4b46-bfec-890a4a909ac9",
+    "shareId": "d1c16dd7",
+    "name": "我的第一个设计",
+    "thumbnail": null,
+    "data": {
+      "furniture": [
+        {
+          "furnitureId": "7d3e2975-25bd-42d5-aea4-5f0b8f282530",
+          "name": "现代沙发",
+          "position": {
+            "x": 1.5034279943929645,
+            "y": 0.399651256062748,
+            "z": -0.7927089665666923
+          },
+          "rotation": {
+            "x": 0.0000014435537946384826,
+            "y": -0.00001628712115702223,
+            "z": 1.1247732105689482e-8
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        }
+      ],
+      "walls": [
+        {
+          "position": {
+            "x": 0,
+            "y": 1.5,
+            "z": -5
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "geometry": {
+            "width": 10,
+            "height": 3,
+            "depth": 0.2
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 1.5,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": -1.5707963267948966,
+            "z": 0
+          },
+          "geometry": {
+            "width": 10,
+            "height": 3,
+            "depth": 0.2
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 1.5,
+            "z": 5
+          },
+          "rotation": {
+            "x": 0,
+            "y": -3.141592653589793,
+            "z": 0
+          },
+          "geometry": {
+            "width": 10,
+            "height": 3,
+            "depth": 0.2
+          }
+        },
+        {
+          "position": {
+            "x": -5,
+            "y": 1.5,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 1.5707963267948966,
+            "z": 0
+          },
+          "geometry": {
+            "width": 10,
+            "height": 3,
+            "depth": 0.2
+          }
+        }
+      ],
+      "lights": {
+        "ambientIntensity": 0.5,
+        "directionalIntensity": 1,
+        "lightColor": "#ffffff"
+      }
+    },
+    "createdAt": "2026-06-21T04:19:34.527Z",
+    "updatedAt": "2026-06-21T04:19:34.527Z"
+  }
+]

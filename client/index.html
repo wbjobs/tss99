@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D室内设计工具</title>
+  <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar">
+      <div class="toolbar-left">
+        <h1>🏠 3D室内设计</h1>
+      </div>
+      <div class="toolbar-center">
+        <button id="btn-upload" class="btn">📷 上传房间照片</button>
+        <button id="btn-camera" class="btn">📹 摄像头检测</button>
+        <button id="btn-add-wall" class="btn">🧱 手动建墙</button>
+        <button id="btn-save" class="btn btn-primary">💾 保存场景</button>
+        <button id="btn-share" class="btn btn-success">🔗 分享</button>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-reset" class="btn btn-danger">🗑️ 清空</button>
+      </div>
+    </div>
+
+    <div id="main-content">
+      <div id="sidebar">
+        <div class="sidebar-section">
+          <h3>🪑 家具库</h3>
+          <div id="category-filter">
+            <button class="category-btn active" data-category="all">全部</button>
+          </div>
+          <div id="furniture-list"></div>
+        </div>
+        
+        <div class="sidebar-section">
+          <h3>💡 灯光控制</h3>
+          <div class="control-group">
+            <label>环境光强度</label>
+            <input type="range" id="ambient-intensity" min="0" max="2" step="0.1" value="0.5">
+          </div>
+          <div class="control-group">
+            <label>主光源强度</label>
+            <input type="range" id="directional-intensity" min="0" max="5" step="0.1" value="1">
+          </div>
+          <div class="control-group">
+            <label>灯光颜色</label>
+            <input type="color" id="light-color" value="#ffffff">
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>⚙️ 选中物体</h3>
+          <div id="selected-info">
+            <p class="hint">点击选择家具</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+        <div id="loading" class="hidden">
+          <div class="spinner"></div>
+          <p>加载中...</p>
+        </div>
+        <div id="detection-panel" class="hidden">
+          <video id="video" autoplay muted></video>
+          <canvas id="detection-canvas"></canvas>
+          <div class="detection-controls">
+            <button id="btn-capture" class="btn btn-primary">捕获平面</button>
+            <button id="btn-close-detection" class="btn">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal" class="hidden">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modal-title">标题</h2>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+  </div>
+
+  <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
