@@ -31,6 +31,9 @@ export default class InteractionManager {
     this.handleStartY = 0;
     this.handleStartFloorY = 0;
 
+    this.measurementMode = false;
+    this.measurementManager = null;
+
     this.init();
   }
 
@@ -115,6 +118,14 @@ export default class InteractionManager {
 
     this.updateMouse(event);
 
+    if (this.measurementMode && this.measurementManager) {
+      const floorIntersect = this.raycaster.intersectObject(this.sceneManager.floor);
+      if (floorIntersect.length > 0) {
+        this.measurementManager.handleClick(floorIntersect[0].point);
+      }
+      return;
+    }
+
     if (this.sceneManager.planeEditMode && this.sceneManager.planeHandles.length > 0) {
       const handleIntersects = this.raycaster.intersectObjects(this.sceneManager.planeHandles, true);
       if (handleIntersects.length > 0) {
@@ -174,6 +185,14 @@ export default class InteractionManager {
 
   onMouseMove(event) {
     this.updateMouse(event);
+
+    if (this.measurementMode && this.measurementManager) {
+      const floorIntersect = this.raycaster.intersectObject(this.sceneManager.floor);
+      if (floorIntersect.length > 0) {
+        this.measurementManager.handleMouseMove(floorIntersect[0].point);
+      }
+      return;
+    }
 
     if (this.isDraggingHandle) {
       const deltaY = (this.handleStartY - event.clientY) * 0.01;
@@ -273,6 +292,10 @@ export default class InteractionManager {
     }
 
     if (event.key === 'Escape') {
+      if (this.measurementMode && this.measurementManager) {
+        this.measurementManager.cancelActive();
+        return;
+      }
       if (this.isPlacingNew) {
         this.cancelPlacing();
       } else {

@@ -4,6 +4,7 @@ import SceneManager from './SceneManager.js';
 import PhysicsWorld from './PhysicsWorld.js';
 import InteractionManager from './InteractionManager.js';
 import PlaneDetector from './PlaneDetector.js';
+import MeasurementManager from './MeasurementManager.js';
 import ApiService from './ApiService.js';
 import UIController from './UIController.js';
 
@@ -18,6 +19,15 @@ class App {
     this.physicsWorld = new PhysicsWorld();
     this.interactionManager = new InteractionManager(this.sceneManager, this.physicsWorld);
     this.planeDetector = new PlaneDetector();
+    this.measurementManager = new MeasurementManager(
+      this.sceneManager.scene,
+      this.sceneManager.camera,
+      this.sceneManager.floor
+    );
+    this.interactionManager.measurementManager = this.measurementManager;
+    this.measurementManager.onMeasurementComplete = () => {
+      this.refreshMeasurementList();
+    };
     this.ui = new UIController(this);
 
     this.furnitureData = [];
@@ -188,6 +198,7 @@ class App {
   setFloorHeight(height) {
     this.sceneManager.setFloorHeight(height);
     this.syncFurniturePhysicsWithFloor();
+    this.measurementManager.updateFloorPosition(height);
   }
 
   setFloorColor(color) {
@@ -244,6 +255,48 @@ class App {
         }
       }
     });
+  }
+
+  toggleMeasurementMode() {
+    const isActive = !this.interactionManager.measurementMode;
+    this.interactionManager.measurementMode = isActive;
+    this.measurementManager.setMeasurementMode(isActive);
+    this.ui.setMeasureButtonActive(isActive);
+    this.canvas.style.cursor = isActive ? 'crosshair' : 'default';
+
+    if (isActive) {
+      this.ui.showToast('测量模式已启用，在地面上点击两点测距');
+    } else {
+      this.ui.showToast('测量模式已关闭');
+    }
+  }
+
+  setMeasurementUnit(unit) {
+    this.measurementManager.setUnit(unit);
+    this.refreshMeasurementList();
+  }
+
+  setMeasurementScale(factor) {
+    this.measurementManager.setScaleFactor(factor);
+    this.refreshMeasurementList();
+  }
+
+  removeMeasurement(id) {
+    this.measurementManager.removeMeasurement(id);
+    this.refreshMeasurementList();
+  }
+
+  clearAllMeasurements() {
+    this.measurementManager.clearAll();
+    this.refreshMeasurementList();
+    this.ui.showToast('已清除所有测量标注');
+  }
+
+  refreshMeasurementList() {
+    this.ui.updateMeasurementList(
+      this.measurementManager.measurements,
+      (dist) => this.measurementManager.formatDistance(dist)
+    );
   }
 
   async startCameraDetection() {
@@ -357,6 +410,7 @@ class App {
   clearScene() {
     this.sceneManager.clearFurniture();
     this.physicsWorld.clear();
+    this.clearAllMeasurements();
     
     this.addDefaultRoom();
     
@@ -366,6 +420,9 @@ class App {
 
   getCurrentSceneData() {
     const sceneData = this.sceneManager.getSceneData();
+    sceneData.measurements = this.measurementManager.getMeasurementData();
+    sceneData.measurementUnit = this.measurementManager.unit;
+    sceneData.measurementScale = this.measurementManager.scaleFactor;
     return sceneData;
   }
 
@@ -424,6 +481,26 @@ class App {
           this.setLightColor(scene.data.lights.lightColor);
         }
       }
+
+      if (scene.data.measurements) {
+        this.measurementManager.loadMeasurementData(scene.data.measurements);
+      }
+      if (scene.data.measurementUnit) {
+        this.measurementManager.setUnit(scene.data.measurementUnit);
+        document.getElementById('measure-unit').value = scene.data.measurementUnit;
+      }
+      if (scene.data.measurementScale) {
+        this.measurementManager.setScaleFactor(scene.data.measurementScale);
+        const slider = document.getElementById('measure-scale');
+        if (slider) {
+          slider.value = Math.round(scene.data.measurementScale * 100);
+        }
+        const scaleVal = document.getElementById('scale-value');
+        if (scaleVal) {
+          scaleVal.textContent = Math.round(scene.data.measurementScale * 100);
+        }
+      }
+      this.refreshMeasurementList();
 
       this.ui.hideLoading();
       this.ui.showToast(`已加载: ${scene.name}`);
@@ -484,5 +561,5 @@ class App {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new App();
+  window.app = new App();
 });

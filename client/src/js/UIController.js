@@ -94,6 +94,24 @@ export default class UIController {
     document.getElementById('btn-reset-plane').addEventListener('click', () => {
       this.app.resetPlane();
     });
+
+    document.getElementById('btn-measure').addEventListener('click', () => {
+      this.app.toggleMeasurementMode();
+    });
+
+    document.getElementById('measure-unit').addEventListener('change', (e) => {
+      this.app.setMeasurementUnit(e.target.value);
+    });
+
+    document.getElementById('measure-scale').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('scale-value').textContent = val;
+      this.app.setMeasurementScale(val / 100);
+    });
+
+    document.getElementById('btn-clear-measurements').addEventListener('click', () => {
+      this.app.clearAllMeasurements();
+    });
   }
 
   renderFurnitureList(furniture) {
@@ -403,5 +421,41 @@ export default class UIController {
     if (checkbox) {
       checkbox.checked = enabled;
     }
+  }
+
+  setMeasureButtonActive(active) {
+    const btn = document.getElementById('btn-measure');
+    if (btn) {
+      if (active) {
+        btn.classList.add('btn-primary');
+      } else {
+        btn.classList.remove('btn-primary');
+      }
+    }
+  }
+
+  updateMeasurementList(measurements, formatDistance) {
+    const list = document.getElementById('measurement-list');
+    if (!list) return;
+
+    if (!measurements || measurements.length === 0) {
+      list.innerHTML = '<p style="color:#888;font-size:0.8rem;">暂无测量标注</p>';
+      return;
+    }
+
+    list.innerHTML = measurements.map((m, i) => {
+      const dist = m.startPoint.distanceTo(m.endPoint);
+      const text = formatDistance(dist);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #333;font-size:0.8rem;">
+        <span style="color:#00ff88;">📏 ${text}</span>
+        <button class="btn" style="padding:2px 6px;font-size:0.7rem;" data-measure-id="${m.id}">✕</button>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('[data-measure-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.app.removeMeasurement(btn.dataset.measureId);
+      });
+    });
   }
 }

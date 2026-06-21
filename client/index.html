@@ -16,6 +16,7 @@
         <button id="btn-upload" class="btn">📷 上传房间照片</button>
         <button id="btn-camera" class="btn">📹 摄像头检测</button>
         <button id="btn-add-wall" class="btn">🧱 手动建墙</button>
+        <button id="btn-measure" class="btn">📏 测量</button>
         <button id="btn-save" class="btn btn-primary">💾 保存场景</button>
         <button id="btn-share" class="btn btn-success">🔗 分享</button>
       </div>
@@ -74,6 +75,28 @@
           </div>
           <div style="font-size:0.75rem;color:#888;margin-top:8px;">
             提示: 启用编辑后可拖动场景中的彩色小球
+          </div>
+        </div>
+
+        <div class="sidebar-section" id="measurement-section">
+          <h3>📏 测量工具</h3>
+          <div class="control-group">
+            <label>测量单位</label>
+            <select id="measure-unit" style="width:100%;padding:4px 8px;border-radius:4px;background:#2a2a3a;color:#eee;border:1px solid #444;">
+              <option value="cm" selected>厘米 (cm) / 米 (m)</option>
+              <option value="inches">英寸 (in) / 英尺 (ft)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>比例尺: 1单位 = <span id="scale-value">100</span> cm</label>
+            <input type="range" id="measure-scale" min="10" max="300" step="10" value="100">
+          </div>
+          <div class="control-group">
+            <button class="btn" id="btn-clear-measurements" style="width:100%;">🗑️ 清除所有标注</button>
+          </div>
+          <div id="measurement-list" style="max-height:150px;overflow-y:auto;"></div>
+          <div style="font-size:0.75rem;color:#888;margin-top:8px;">
+            提示: 启用测量后在地面上点击两点测距，Esc取消
           </div>
         </div>
 
