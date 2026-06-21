@@ -27,6 +27,12 @@ export default class SceneManager {
     this.onFurnitureAdd = null;
     this.onFurnitureRemove = null;
     
+    this.floorHeight = 0;
+    this.planeEditMode = false;
+    this.planeHandles = [];
+    this.activeHandle = null;
+    this.wallBaseHeight = 0;
+    
     this.init();
   }
 
@@ -58,6 +64,7 @@ export default class SceneManager {
     this.setupGrid();
     this.setupControls();
     this.setupDragPlane();
+    this.setupPlaneEditor();
 
     window.addEventListener('resize', () => this.onResize());
   }
@@ -590,5 +597,160 @@ export default class SceneManager {
         this.setLightColor(data.lights.lightColor);
       }
     }
+
+    if (data.floor && typeof data.floor.height !== 'undefined') {
+      this.setFloorHeight(data.floor.height);
+    }
+  }
+
+  setupPlaneEditor() {
+    this.planeHandleGroup = new THREE.Group();
+    this.planeHandleGroup.visible = false;
+    this.scene.add(this.planeHandleGroup);
+
+    this.floorOutline = new THREE.LineSegments();
+    this.floorOutline.visible = false;
+    this.scene.add(this.floorOutline);
+
+    this.createPlaneHandles();
+    this.createFloorOutline();
+  }
+
+  createPlaneHandles() {
+    const handleGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+    const positions = [
+      { x: -5, z: -5, color: 0xff4444, name: 'corner-fl' },
+      { x: 5, z: -5, color: 0x44ff44, name: 'corner-fr' },
+      { x: 5, z: 5, color: 0x4444ff, name: 'corner-br' },
+      { x: -5, z: 5, color: 0xffff44, name: 'corner-bl' },
+      { x: 0, z: 0, color: 0xff00ff, name: 'center' }
+    ];
+
+    positions.forEach(pos => {
+      const handleMaterial = new THREE.MeshBasicMaterial({
+        color: pos.color,
+        transparent: true,
+        opacity: 0.9
+      });
+      const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+      handle.position.set(pos.x, this.floorHeight + 0.1, pos.z);
+      handle.userData = {
+        isPlaneHandle: true,
+        handleName: pos.name,
+        baseX: pos.x,
+        baseZ: pos.z,
+        baseColor: pos.color
+      };
+      this.planeHandleGroup.add(handle);
+      this.planeHandles.push(handle);
+    });
+  }
+
+  createFloorOutline() {
+    const points = [
+      new THREE.Vector3(-5, 0, -5),
+      new THREE.Vector3(5, 0, -5),
+      new THREE.Vector3(5, 0, 5),
+      new THREE.Vector3(-5, 0, 5),
+      new THREE.Vector3(-5, 0, -5)
+    ];
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.8,
+      linewidth: 2
+    });
+    this.floorOutline.geometry = geometry;
+    this.floorOutline.material = material;
+  }
+
+  togglePlaneEditMode(enable) {
+    this.planeEditMode = enable;
+    this.planeHandleGroup.visible = enable;
+    this.floorOutline.visible = enable;
+
+    if (enable) {
+      this.canvas.style.cursor = 'pointer';
+    } else {
+      this.canvas.style.cursor = 'default';
+    }
+
+    this.updatePlaneHandlesPosition();
+  }
+
+  updatePlaneHandlesPosition() {
+    this.planeHandles.forEach(handle => {
+      handle.position.y = this.floorHeight + 0.1;
+    });
+
+    if (this.floorOutline) {
+      this.floorOutline.position.y = this.floorHeight;
+    }
+  }
+
+  setFloorHeight(height) {
+    this.floorHeight = height;
+    if (this.floor) {
+      this.floor.position.y = height;
+    }
+
+    if (this.scene.getObjectByName('mainGrid')) {
+      this.scene.getObjectByName('mainGrid').position.y = height + 0.01;
+    } else {
+      this.scene.children.forEach(child => {
+        if (child instanceof THREE.GridHelper) {
+          child.position.y = height + 0.01;
+        }
+      });
+    }
+
+    this.updatePlaneHandlesPosition();
+    this.updateWallsBase(height);
+
+    if (this.onFloorHeightChange) {
+      this.onFloorHeightChange(height);
+    }
+  }
+
+  adjustFloorHeight(delta) {
+    const newHeight = Math.max(-2, Math.min(3, this.floorHeight + delta));
+    this.setFloorHeight(newHeight);
+    return this.floorHeight;
+  }
+
+  updateWallsBase(baseHeight) {
+    this.walls.forEach(wall => {
+      const params = wall.geometry.parameters;
+      const oldHeight = params.height;
+      const posY = baseHeight + oldHeight / 2;
+      wall.position.y = posY;
+    });
+  }
+
+  snapFurnitureToFloor() {
+    this.furniture.forEach(f => {
+      const data = f.userData;
+      if (data && data.height) {
+        const targetY = this.floorHeight + data.height / 2;
+        f.position.y = targetY;
+      }
+    });
+  }
+
+  setFloorColor(colorHex) {
+    if (this.floor && this.floor.material) {
+      this.floor.material.color.set(colorHex);
+    }
+  }
+
+  getFloorHeight() {
+    return this.floorHeight;
+  }
+
+  isPointInRoom(x, z, margin = 0) {
+    const halfRoom = 5 - margin;
+    return x >= -halfRoom && x <= halfRoom && z >= -halfRoom && z <= halfRoom;
   }
 }

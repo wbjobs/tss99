@@ -54,6 +54,15 @@ class App {
     this.interactionManager.onDeselect = () => {
       this.ui.updateSelectedInfo(null);
     };
+
+    this.interactionManager.onFloorHeightChanged = (height) => {
+      this.ui.updateFloorHeightDisplay(height);
+      this.syncFurniturePhysicsWithFloor();
+    };
+
+    this.sceneManager.onFloorHeightChange = (height) => {
+      this.ui.updateFloorHeightDisplay(height);
+    };
   }
 
   addDefaultRoom() {
@@ -115,9 +124,10 @@ class App {
 
   addFurniture(furnitureItem) {
     const obj = this.sceneManager.addFurniture(furnitureItem);
+    const floorH = this.sceneManager.getFloorHeight();
     obj.position.set(
       (Math.random() - 0.5) * 4,
-      furnitureItem.height / 2,
+      floorH + furnitureItem.height / 2,
       (Math.random() - 0.5) * 4
     );
     
@@ -163,6 +173,77 @@ class App {
 
   setLightColor(color) {
     this.sceneManager.setLightColor(color);
+  }
+
+  togglePlaneEditMode(enabled) {
+    this.sceneManager.togglePlaneEditMode(enabled);
+    this.ui.setPlaneEditModeUI(enabled);
+    if (enabled) {
+      this.ui.showToast('平面编辑已启用，拖动彩色小球调整地面高度');
+    } else {
+      this.ui.showToast('平面编辑已关闭');
+    }
+  }
+
+  setFloorHeight(height) {
+    this.sceneManager.setFloorHeight(height);
+    this.syncFurniturePhysicsWithFloor();
+  }
+
+  setFloorColor(color) {
+    this.sceneManager.setFloorColor(color);
+  }
+
+  snapAllFurnitureToFloor() {
+    const floorH = this.sceneManager.getFloorHeight();
+    
+    this.sceneManager.furniture.forEach(f => {
+      const data = f.userData;
+      if (data && data.height) {
+        const targetY = floorH + data.height / 2;
+        f.position.y = targetY;
+        
+        const body = this.physicsWorld.bodies.get(f);
+        if (body) {
+          body.position.y = targetY;
+          body.velocity.set(0, 0, 0);
+          body.angularVelocity.set(0, 0, 0);
+        }
+      }
+    });
+
+    this.sceneManager.snapFurnitureToFloor();
+    this.ui.showToast('所有家具已吸附到地面');
+  }
+
+  resetPlane() {
+    this.setFloorHeight(0);
+    this.ui.updateFloorHeightDisplay(0);
+    this.setFloorColor('#d2b48c');
+    document.getElementById('floor-color').value = '#d2b48c';
+    document.getElementById('plane-edit-mode').checked = false;
+    this.sceneManager.togglePlaneEditMode(false);
+    this.snapAllFurnitureToFloor();
+    this.ui.showToast('平面已重置');
+  }
+
+  syncFurniturePhysicsWithFloor() {
+    const floorH = this.sceneManager.getFloorHeight();
+    
+    this.sceneManager.furniture.forEach(f => {
+      const data = f.userData;
+      const body = this.physicsWorld.bodies.get(f);
+      if (!body || !data || !data.height) return;
+
+      const minY = floorH + data.height / 2;
+      if (body.position.y < minY) {
+        body.position.y = minY;
+        f.position.y = minY;
+        if (body.velocity.y < 0) {
+          body.velocity.y = 0;
+        }
+      }
+    });
   }
 
   async startCameraDetection() {
@@ -393,6 +474,8 @@ class App {
     const delta = this.clock.getDelta();
     
     this.physicsWorld.step();
+    
+    this.syncFurniturePhysicsWithFloor();
     
     this.interactionManager.update();
 

@@ -72,6 +72,28 @@ export default class UIController {
         this.filterFurniture(category);
       });
     });
+
+    document.getElementById('plane-edit-mode').addEventListener('change', (e) => {
+      this.app.togglePlaneEditMode(e.target.checked);
+    });
+
+    document.getElementById('floor-height').addEventListener('input', (e) => {
+      const height = parseFloat(e.target.value);
+      this.app.setFloorHeight(height);
+      this.updateFloorHeightDisplay(height);
+    });
+
+    document.getElementById('floor-color').addEventListener('input', (e) => {
+      this.app.setFloorColor(e.target.value);
+    });
+
+    document.getElementById('btn-snap-floor').addEventListener('click', () => {
+      this.app.snapAllFurnitureToFloor();
+    });
+
+    document.getElementById('btn-reset-plane').addEventListener('click', () => {
+      this.app.resetPlane();
+    });
   }
 
   renderFurnitureList(furniture) {
@@ -363,5 +385,23 @@ export default class UIController {
 
   hideDetectionPanel() {
     document.getElementById('detection-panel').classList.add('hidden');
+  }
+
+  updateFloorHeightDisplay(height) {
+    const el = document.getElementById('floor-height-value');
+    if (el) {
+      el.textContent = height.toFixed(2);
+    }
+    const slider = document.getElementById('floor-height');
+    if (slider && document.activeElement !== slider) {
+      slider.value = height.toString();
+    }
+  }
+
+  setPlaneEditModeUI(enabled) {
+    const checkbox = document.getElementById('plane-edit-mode');
+    if (checkbox) {
+      checkbox.checked = enabled;
+    }
   }
 }

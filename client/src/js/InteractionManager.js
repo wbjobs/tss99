@@ -26,6 +26,11 @@ export default class InteractionManager {
     this.placingObject = null;
     this.placingData = null;
 
+    this.isDraggingHandle = false;
+    this.activeHandle = null;
+    this.handleStartY = 0;
+    this.handleStartFloorY = 0;
+
     this.init();
   }
 
@@ -110,6 +115,18 @@ export default class InteractionManager {
 
     this.updateMouse(event);
 
+    if (this.sceneManager.planeEditMode && this.sceneManager.planeHandles.length > 0) {
+      const handleIntersects = this.raycaster.intersectObjects(this.sceneManager.planeHandles, true);
+      if (handleIntersects.length > 0) {
+        this.isDraggingHandle = true;
+        this.activeHandle = handleIntersects[0].object;
+        this.handleStartY = event.clientY;
+        this.handleStartFloorY = this.sceneManager.getFloorHeight();
+        this.deselectObject();
+        return;
+      }
+    }
+
     if (this.gizmo.visible) {
       const gizmoIntersects = this.raycaster.intersectObjects(this.gizmoArrows, true);
       if (gizmoIntersects.length > 0) {
@@ -158,6 +175,14 @@ export default class InteractionManager {
   onMouseMove(event) {
     this.updateMouse(event);
 
+    if (this.isDraggingHandle) {
+      const deltaY = (this.handleStartY - event.clientY) * 0.01;
+      const newFloorY = this.handleStartFloorY + deltaY;
+      const clampedY = Math.max(-2, Math.min(3, newFloorY));
+      this.sceneManager.setFloorHeight(clampedY);
+      return;
+    }
+
     if (this.isPlacingNew && this.placingObject) {
       this.updatePlacingPosition();
       return;
@@ -166,6 +191,16 @@ export default class InteractionManager {
     if ((this.isDragging || this.isRotating) && this.selectedObject) {
       this.handleDrag();
       return;
+    }
+
+    if (this.sceneManager.planeEditMode && this.sceneManager.planeHandles.length > 0) {
+      const handleIntersects = this.raycaster.intersectObjects(this.sceneManager.planeHandles, true);
+      this.sceneManager.planeHandles.forEach(handle => {
+        handle.scale.set(1, 1, 1);
+      });
+      if (handleIntersects.length > 0) {
+        handleIntersects[0].object.scale.set(1.4, 1.4, 1.4);
+      }
     }
 
     if (this.gizmo.visible) {
@@ -184,6 +219,15 @@ export default class InteractionManager {
   }
 
   onMouseUp(event) {
+    if (this.isDraggingHandle) {
+      this.isDraggingHandle = false;
+      this.activeHandle = null;
+      if (this.onFloorHeightChanged) {
+        this.onFloorHeightChanged(this.sceneManager.getFloorHeight());
+      }
+      return;
+    }
+
     if (this.isPlacingNew) {
       this.finishPlacing();
       return;
@@ -281,7 +325,8 @@ export default class InteractionManager {
         newPos.y = this.selectedObject.position.y;
       }
       
-      newPos.y = Math.max(newPos.y, this.selectedObject.userData.height / 2);
+      const floorHeight = this.sceneManager.getFloorHeight ? this.sceneManager.getFloorHeight() : 0;
+      newPos.y = Math.max(newPos.y, floorHeight + this.selectedObject.userData.height / 2);
 
       if (this.checkCollisionAtPosition(newPos)) {
         return;
